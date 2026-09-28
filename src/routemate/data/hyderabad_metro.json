@@ -1,0 +1,144 @@
+{
+  "city": "Hyderabad",
+  "system": "Hyderabad Metro Rail",
+  "timezone": "Asia/Kolkata",
+  "service": {
+    "first_departure": "06:00",
+    "last_departure": "23:00",
+    "avg_run_speed_kmph": 40,
+    "max_speed_kmph": 80,
+    "dwell_min": 0.33,
+    "access_min": 2,
+    "headways": [
+      { "from": "06:00", "to": "08:00", "every_min": 8 },
+      { "from": "08:00", "to": "11:00", "every_min": 4 },
+      { "from": "11:00", "to": "17:00", "every_min": 6 },
+      { "from": "17:00", "to": "20:30", "every_min": 4 },
+      { "from": "20:30", "to": "23:59", "every_min": 8 }
+    ]
+  },
+  "fare": {
+    "currency": "INR",
+    "source": "L&T Metro Rail (Hyderabad) revised fare chart, effective 24 May 2025",
+    "slabs": [
+      { "upto_km": 2, "fare": 11 },
+      { "upto_km": 4, "fare": 17 },
+      { "upto_km": 6, "fare": 28 },
+      { "upto_km": 9, "fare": 37 },
+      { "upto_km": 12, "fare": 47 },
+      { "upto_km": 15, "fare": 51 },
+      { "upto_km": 18, "fare": 56 },
+      { "upto_km": 21, "fare": 61 },
+      { "upto_km": 24, "fare": 65 },
+      { "upto_km": null, "fare": 69 }
+    ]
+  },
+  "lines": [
+    {
+      "id": "red",
+      "name": "Red Line",
+      "corridor": "Corridor I",
+      "color": "#E53935",
+      "length_km": 29.2,
+      "stations": [
+        "miyapur", "jntu_college", "kphb_colony", "kukatpally", "balanagar", "moosapet",
+        "bharat_nagar", "erragadda", "esi_hospital", "sr_nagar", "ameerpet", "punjagutta",
+        "irrum_manzil", "khairatabad", "lakdikapul", "assembly", "nampally", "gandhi_bhavan",
+        "osmania_medical_college", "mg_bus_station", "malakpet", "new_market", "musarambagh",
+        "dilsukhnagar", "chaitanyapuri", "victoria_memorial", "lb_nagar"
+      ]
+    },
+    {
+      "id": "blue",
+      "name": "Blue Line",
+      "corridor": "Corridor III",
+      "color": "#1E63D6",
+      "length_km": 27.0,
+      "stations": [
+        "nagole", "uppal", "stadium", "ngri", "habsiguda", "tarnaka", "mettuguda",
+        "secunderabad_east", "parade_ground", "paradise", "rasoolpura", "prakash_nagar",
+        "begumpet", "ameerpet", "madhura_nagar", "yusufguda", "road_no_5_jubilee_hills",
+        "jubilee_hills_check_post", "peddamma_gudi", "madhapur", "durgam_cheruvu",
+        "hitech_city", "raidurg"
+      ]
+    },
+    {
+      "id": "green",
+      "name": "Green Line",
+      "corridor": "Corridor II",
+      "color": "#2E9E4F",
+      "length_km": 11.0,
+      "stations": [
+        "jbs_parade_ground", "parade_ground", "secunderabad_west", "gandhi_hospital",
+        "musheerabad", "rtc_cross_roads", "chikkadpally", "narayanguda", "sultan_bazaar",
+        "mg_bus_station"
+      ]
+    }
+  ],
+  "interchanges": [
+    { "station": "ameerpet", "walk_min": 3 },
+    { "station": "mg_bus_station", "walk_min": 5 },
+    { "station": "parade_ground", "walk_min": 4 }
+  ],
+  "stations": [
+    { "id": "miyapur", "name": "Miyapur", "lat": 17.4969, "lon": 78.3713, "aliases": ["miyapur x roads"] },
+    { "id": "jntu_college", "name": "JNTU College", "lat": 17.4933, "lon": 78.3915, "aliases": ["jntu", "jntuh"] },
+    { "id": "kphb_colony", "name": "KPHB Colony", "lat": 17.4938, "lon": 78.4011, "aliases": ["kphb"] },
+    { "id": "kukatpally", "name": "Kukatpally", "lat": 17.4847, "lon": 78.4118, "aliases": ["kukatpalli"] },
+    { "id": "balanagar", "name": "Balanagar", "lat": 17.4772, "lon": 78.4235, "aliases": [] },
+    { "id": "moosapet", "name": "Moosapet", "lat": 17.4704, "lon": 78.4260, "aliases": ["musapet"] },
+    { "id": "bharat_nagar", "name": "Bharat Nagar", "lat": 17.4640, "lon": 78.4292, "aliases": [] },
+    { "id": "erragadda", "name": "Erragadda", "lat": 17.4574, "lon": 78.4337, "aliases": ["erragada"] },
+    { "id": "esi_hospital", "name": "ESI Hospital", "lat": 17.4474, "lon": 78.4383, "aliases": ["esi"] },
+    { "id": "sr_nagar", "name": "SR Nagar", "lat": 17.4417, "lon": 78.4452, "aliases": ["s r nagar", "sanjeeva reddy nagar"] },
+    { "id": "ameerpet", "name": "Ameerpet", "lat": 17.4375, "lon": 78.4482, "aliases": ["amirpet"] },
+    { "id": "punjagutta", "name": "Punjagutta", "lat": 17.4282, "lon": 78.4506, "aliases": ["panjagutta"] },
+    { "id": "irrum_manzil", "name": "Irrum Manzil", "lat": 17.4199, "lon": 78.4545, "aliases": ["erram manzil", "errum manzil"] },
+    { "id": "khairatabad", "name": "Khairatabad", "lat": 17.4115, "lon": 78.4602, "aliases": [] },
+    { "id": "lakdikapul", "name": "Lakdikapul", "lat": 17.4036, "lon": 78.4652, "aliases": ["lakdi ka pul"] },
+    { "id": "assembly", "name": "Assembly", "lat": 17.3990, "lon": 78.4708, "aliases": ["public gardens"] },
+    { "id": "nampally", "name": "Nampally", "lat": 17.3915, "lon": 78.4717, "aliases": [] },
+    { "id": "gandhi_bhavan", "name": "Gandhi Bhavan", "lat": 17.3868, "lon": 78.4764, "aliases": [] },
+    { "id": "osmania_medical_college", "name": "Osmania Medical College", "lat": 17.3809, "lon": 78.4816, "aliases": ["omc", "osmania"] },
+    { "id": "mg_bus_station", "name": "MG Bus Station", "lat": 17.3780, "lon": 78.4855, "aliases": ["mgbs", "imlibun", "mahatma gandhi bus station"] },
+    { "id": "malakpet", "name": "Malakpet", "lat": 17.3736, "lon": 78.4944, "aliases": [] },
+    { "id": "new_market", "name": "New Market", "lat": 17.3693, "lon": 78.5019, "aliases": [] },
+    { "id": "musarambagh", "name": "Musarambagh", "lat": 17.3707, "lon": 78.5105, "aliases": [] },
+    { "id": "dilsukhnagar", "name": "Dilsukhnagar", "lat": 17.3689, "lon": 78.5250, "aliases": ["dsnr", "dilsukh nagar"] },
+    { "id": "chaitanyapuri", "name": "Chaitanyapuri", "lat": 17.3685, "lon": 78.5363, "aliases": [] },
+    { "id": "victoria_memorial", "name": "Victoria Memorial", "lat": 17.3580, "lon": 78.5440, "aliases": ["kothapet"] },
+    { "id": "lb_nagar", "name": "LB Nagar", "lat": 17.3499, "lon": 78.5494, "aliases": ["l b nagar", "lal bahadur nagar"] },
+
+    { "id": "nagole", "name": "Nagole", "lat": 17.3933, "lon": 78.5575, "aliases": [] },
+    { "id": "uppal", "name": "Uppal", "lat": 17.4011, "lon": 78.5591, "aliases": [] },
+    { "id": "stadium", "name": "Stadium", "lat": 17.4061, "lon": 78.5496, "aliases": ["uppal stadium"] },
+    { "id": "ngri", "name": "NGRI", "lat": 17.4125, "lon": 78.5414, "aliases": [] },
+    { "id": "habsiguda", "name": "Habsiguda", "lat": 17.4178, "lon": 78.5349, "aliases": [] },
+    { "id": "tarnaka", "name": "Tarnaka", "lat": 17.4282, "lon": 78.5279, "aliases": [] },
+    { "id": "mettuguda", "name": "Mettuguda", "lat": 17.4331, "lon": 78.5192, "aliases": [] },
+    { "id": "secunderabad_east", "name": "Secunderabad East", "lat": 17.4351, "lon": 78.5084, "aliases": ["secunderabad"] },
+    { "id": "parade_ground", "name": "Parade Ground", "lat": 17.4428, "lon": 78.4983, "aliases": ["parade grounds"] },
+    { "id": "paradise", "name": "Paradise", "lat": 17.4436, "lon": 78.4876, "aliases": [] },
+    { "id": "rasoolpura", "name": "Rasoolpura", "lat": 17.4436, "lon": 78.4775, "aliases": [] },
+    { "id": "prakash_nagar", "name": "Prakash Nagar", "lat": 17.4450, "lon": 78.4668, "aliases": [] },
+    { "id": "begumpet", "name": "Begumpet", "lat": 17.4422, "lon": 78.4590, "aliases": [] },
+    { "id": "madhura_nagar", "name": "Madhura Nagar", "lat": 17.4378, "lon": 78.4395, "aliases": [] },
+    { "id": "yusufguda", "name": "Yusufguda", "lat": 17.4349, "lon": 78.4302, "aliases": [] },
+    { "id": "road_no_5_jubilee_hills", "name": "Road No 5 Jubilee Hills", "lat": 17.4298, "lon": 78.4215, "aliases": ["jubilee hills road 5", "road number 5"] },
+    { "id": "jubilee_hills_check_post", "name": "Jubilee Hills Check Post", "lat": 17.4290, "lon": 78.4125, "aliases": ["jubilee hills checkpost", "check post"] },
+    { "id": "peddamma_gudi", "name": "Peddamma Gudi", "lat": 17.4312, "lon": 78.4050, "aliases": ["peddamma temple"] },
+    { "id": "madhapur", "name": "Madhapur", "lat": 17.4373, "lon": 78.3975, "aliases": [] },
+    { "id": "durgam_cheruvu", "name": "Durgam Cheruvu", "lat": 17.4430, "lon": 78.3877, "aliases": ["inorbit", "inorbit mall"] },
+    { "id": "hitech_city", "name": "Hitech City", "lat": 17.4486, "lon": 78.3808, "aliases": ["hitec city", "hi tech city", "hitec", "hitech", "hitecity"] },
+    { "id": "raidurg", "name": "Raidurg", "lat": 17.4410, "lon": 78.3770, "aliases": ["raidurgam", "raidurgam knowledge city"] },
+
+    { "id": "jbs_parade_ground", "name": "JBS Parade Ground", "lat": 17.4474, "lon": 78.4990, "aliases": ["jbs", "jubilee bus station"] },
+    { "id": "secunderabad_west", "name": "Secunderabad West", "lat": 17.4337, "lon": 78.5010, "aliases": [] },
+    { "id": "gandhi_hospital", "name": "Gandhi Hospital", "lat": 17.4247, "lon": 78.5022, "aliases": [] },
+    { "id": "musheerabad", "name": "Musheerabad", "lat": 17.4175, "lon": 78.4999, "aliases": [] },
+    { "id": "rtc_cross_roads", "name": "RTC Cross Roads", "lat": 17.4046, "lon": 78.4960, "aliases": ["rtc x roads", "rtc crossroads"] },
+    { "id": "chikkadpally", "name": "Chikkadpally", "lat": 17.3998, "lon": 78.4935, "aliases": ["chikkadpalli"] },
+    { "id": "narayanguda", "name": "Narayanguda", "lat": 17.3918, "lon": 78.4903, "aliases": [] },
+    { "id": "sultan_bazaar", "name": "Sultan Bazaar", "lat": 17.3845, "lon": 78.4870, "aliases": ["koti", "sultan bazar"] }
+  ]
+}

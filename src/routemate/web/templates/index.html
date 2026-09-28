@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RouteMate AI — Hyderabad Metro route planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <aside class="panel">
+    <header class="brand">
+      <div class="logo">R</div>
+      <div>
+        <h1>RouteMate <span>AI</span></h1>
+        <p>Hyderabad Metro · smart route planner</p>
+      </div>
+      <span id="ai-badge" class="badge" title="">AI …</span>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="ask">Ask</button>
+      <button class="tab" data-tab="plan">Plan</button>
+      <button class="tab" data-tab="lab">Algorithms</button>
+    </nav>
+
+    <section id="tab-ask" class="tab-body active">
+      <form id="ask-form" class="ask">
+        <textarea id="ask-text" rows="2" placeholder="e.g. I'm at Ameerpet, need to reach Hitech City before 10, don't want to change trains much"></textarea>
+        <button type="submit" class="primary">Ask</button>
+      </form>
+      <div id="context" class="context hidden">
+        <span id="context-text"></span>
+        <button id="context-clear" class="link">start over</button>
+      </div>
+      <div class="chips" id="examples">
+        <button class="chip">I'm at Ameerpet, need to reach Hitech City before 10, don't want to change trains much</button>
+        <button class="chip">cheapest way from LB Nagar to Miyapur</button>
+        <button class="chip">Uppal to Jubilee Hills Check Post at 6pm, avoid Ameerpet</button>
+        <button class="chip">what if I want the fastest?</button>
+      </div>
+    </section>
+
+    <section id="tab-plan" class="tab-body">
+      <form id="plan-form" class="plan" autocomplete="off">
+        <div class="od">
+          <div class="field">
+            <label>From</label>
+            <input id="from" placeholder="Start station">
+            <ul class="suggest" data-for="from"></ul>
+          </div>
+          <button type="button" id="swap" class="swap" title="Swap">⇅</button>
+          <div class="field">
+            <label>To</label>
+            <input id="to" placeholder="Destination">
+            <ul class="suggest" data-for="to"></ul>
+          </div>
+        </div>
+        <div class="field">
+          <label>Optimise for</label>
+          <div class="segmented" id="mode"></div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>When</label>
+            <select id="when">
+              <option value="now">Leave now</option>
+              <option value="departAt">Depart at</option>
+              <option value="arriveBy">Arrive by</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <input id="time" type="time" disabled>
+          </div>
+        </div>
+        <button type="submit" class="primary wide">Find route</button>
+        <p class="hint">Tip: click stations on the map to fill From and To.</p>
+      </form>
+    </section>
+
+    <section id="tab-lab" class="tab-body">
+      <p class="muted">Runs every algorithm on the same trip and shows how much work each one did. Uses the From/To of the Plan tab.</p>
+      <button id="run-lab" class="primary wide">Compare algorithms</button>
+      <div id="lab-out"></div>
+    </section>
+
+    <div id="error" class="error hidden"></div>
+    <div id="result"></div>
+  </aside>
+
+  <main id="map"></main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

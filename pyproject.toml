@@ -1,0 +1,26 @@
+[project]
+name = "routemate"
+version = "0.1.0"
+description = "RouteMate AI — AI-assisted Hyderabad Metro route planner built on hand-written graph algorithms"
+readme = "README.md"
+authors = [
+    { name = "nithin raj", email = "nithinraj9100@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.1.3",
+    "google-genai>=2.25.0",
+    "python-dotenv>=1.2.3",
+]
+
+[project.scripts]
+routemate = "routemate:main"
+
+[build-system]
+requires = ["uv_build>=0.8.23,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
