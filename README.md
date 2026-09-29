@@ -28,21 +28,10 @@ uv sync                          # install dependencies into .venv
 cp .env.example .env             # then paste your GEMINI_API_KEY (optional)
 uv run routemate init-db         # create + seed var/routemate.db (SQLite)
 uv run routemate serve           # http://127.0.0.1:5050
-uv run pytest                    # 111 tests
+uv run pytest                    # 117 tests
 ```
 
 Without a Gemini key, everything still works. The app uses the offline rule parser and template explanations, and shows "AI offline".
-
-### CLI
-
-```bash
-uv run routemate route Miyapur "Hitech City" --at 08:40
-uv run routemate route "LB Nagar" Nagole --mode fewest_transfers --arrive-by 10:00
-uv run routemate route "LB Nagar" Nagole --avoid Ameerpet
-uv run routemate options Raidurg Uppal            # Pareto trade-offs
-uv run routemate compare Miyapur Nagole --at 09:00  # benchmark every algorithm
-uv run routemate ask "cheapest way from LB Nagar to Miyapur"
-```
 
 ---
 
@@ -117,7 +106,7 @@ ride(s, L1, dir) ─transfer(walk)─▶ wait(s, L2)     (interchanges only)
 | POST | `/api/ask` `{text, context?, language?}` | natural-language planning |
 | GET | `/api/history` | recent searches (SQLite) |
 
-### 8. Tests (111, about 2 s)
+### 8. Tests (117, about 3 s)
 - **Algorithms:** checked against brute force on random graphs: Dijkstra vs Floyd–Warshall, BFS vs all-pairs hop counts, 0-1 BFS vs Dijkstra, Yen vs enumerating every simple path, Pareto vs a brute-force Pareto front.
 - **Data structures:** heaps checked against sorting and a reference model.
 - **Planner invariants:** step times add up to the total, fewest-changes never has more changes than fastest, arrive-by really is the latest departure, and more.
@@ -157,8 +146,8 @@ src/routemate/
   planner/                    timetable, itinerary, route planner
   nlp/                        station index, rule parser, Gemini parser/explainer, assistant
   web/                        Flask app, API, UI
-  db.py  config.py  services.py  cli.py
-tests/                        111 tests
+  db.py  config.py  services.py  cli.py (init-db, serve)
+tests/                        117 tests
 ```
 
 ## Configuration (`.env`)
