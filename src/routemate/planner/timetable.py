@@ -23,6 +23,13 @@ class Timetable:
             t += svc.headway_at(t)
         self.terminal_departures = departures
 
+    def next_bus(self, route: str, seq: int, clock: float) -> float | None:
+        """Real TGSRTC departure times from the first stop, shifted by the median run time to stop `seq`."""
+        r = self.tg.network.buses[route]
+        off = r.offsets[seq]
+        j = bisect_left(r.departures, clock - off - 1e-9)
+        return None if j == len(r.departures) else r.departures[j] + off
+
     def offset(self, line: str, direction: int, station: str) -> float:
         return self.tg.offsets[(line, direction)][self.tg.index[(line, station)]]
 

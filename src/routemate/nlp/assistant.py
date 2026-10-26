@@ -70,10 +70,13 @@ class Assistant:
             depart_at=query.depart_at,
             arrive_by=query.arrive_by,
             avoid=query.avoid,
+            buses=bool(query.buses),
         )
         plan_dict = plan.to_dict(net, self.planner.tg)
         try:
-            options, _ = self.planner.options(query.origin, query.destination, depart_at=plan.itinerary.depart_at, avoid=query.avoid)
+            options, _ = self.planner.options(
+                query.origin, query.destination, depart_at=plan.itinerary.depart_at, avoid=query.avoid, buses=plan.buses
+            )
             options_dicts = [o.to_dict(net, self.planner.tg) for o in options]
         except PlanningError:
             options_dicts = []

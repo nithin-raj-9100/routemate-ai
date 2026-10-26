@@ -5,7 +5,7 @@ from .gemini import GeminiClient
 from .query import TripQuery
 from .stations import StationIndex
 
-MODES = ["", "fastest", "fewest_transfers", "fewest_stops", "shortest_distance", "cheapest"]
+MODES = ["", "fastest", "fewest_transfers", "fewest_stops", "shortest_distance", "cheapest", "least_crowded"]
 
 SCHEMA = {
     "type": "object",
@@ -16,9 +16,10 @@ SCHEMA = {
         "depart_at": {"type": "string", "description": "24h HH:MM, or empty"},
         "arrive_by": {"type": "string", "description": "24h HH:MM, or empty"},
         "avoid": {"type": "array", "items": {"type": "string"}},
+        "buses": {"type": "string", "enum": ["", "yes", "no"], "description": "yes if buses/walking are welcome, no if metro only, empty if not said"},
         "language": {"type": "string", "description": "ISO 639-1 code of the user's language"},
     },
-    "required": ["origin", "destination", "mode", "depart_at", "arrive_by", "avoid", "language"],
+    "required": ["origin", "destination", "mode", "depart_at", "arrive_by", "avoid", "buses", "language"],
 }
 
 
@@ -33,21 +34,24 @@ class LLMParser:
         self.client = client
         self.index = index
         self.network = network
-        names = ", ".join(sorted(s.name for s in network.stations.values()))
+        names = ", ".join(sorted(network.stations[sid].name for sid in network.metro_stations))
         lines = "; ".join(
             f"{l.name}: {network.stations[l.stations[0]].name} to {network.stations[l.stations[-1]].name}"
             for l in network.lines.values()
         )
         self.system = (
             f"You convert trip requests for the {network.system} in {network.city} into JSON.\n"
-            f"Stations (always answer with these exact names): {names}.\n"
+            f"Metro stations (use these exact names): {names}.\n"
             f"Lines: {lines}.\n"
             "Rules:\n"
             "- origin/destination: station names from the list; map a well-known landmark or area to its metro station "
-            "only when it is unambiguous (e.g. 'Inorbit Mall' -> Durgam Cheruvu, 'Koti' -> Sultan Bazaar). Empty if not stated.\n"
+            "only when it is unambiguous (e.g. 'Inorbit Mall' -> Durgam Cheruvu, 'Koti' -> Sultan Bazaar). "
+            "A place far from the metro (e.g. Mehdipatnam, Kondapur, Charminar) may be given as its own name; it is "
+            "matched against TGSRTC bus stops. Empty if not stated.\n"
             "- For a follow-up like 'and back?' or 'return trip', swap the previous origin and destination.\n"
-            "- mode: fastest | fewest_transfers (user dislikes changing trains) | fewest_stops | shortest_distance | cheapest; "
-            "empty when no preference is expressed.\n"
+            "- mode: fastest | fewest_transfers (user dislikes changing trains) | fewest_stops | shortest_distance | cheapest "
+            "| least_crowded (wants a less crowded train or a seat); empty when no preference is expressed.\n"
+            "- buses: yes if the user mentions buses or walking, no if they want the metro only, otherwise empty.\n"
             "- 'before/by/reach by X' is arrive_by; 'at/after/leaving X' is depart_at. Resolve relative times using the current time. "
             "Assume the nearest upcoming time when am/pm is missing.\n"
             "- avoid: stations the user explicitly wants to avoid.\n"
@@ -87,6 +91,7 @@ class LLMParser:
         if q.depart_at is not None and q.arrive_by is not None:
             q.depart_at = None
         q.avoid = [sid for sid in (self.index.resolve(a) for a in data.get("avoid") or []) if sid]
+        q.buses = {"yes": True, "no": False}.get(data.get("buses") or "")
         return q
 
 
@@ -100,6 +105,7 @@ def combine(primary: TripQuery, fallback: TripQuery) -> TripQuery:
         depart_at=primary.depart_at if has_time else fallback.depart_at,
         arrive_by=primary.arrive_by if has_time else fallback.arrive_by,
         avoid=primary.avoid or fallback.avoid,
+        buses=primary.buses if primary.buses is not None else fallback.buses,
         language=primary.language,
         parser=primary.parser,
         notes=primary.notes + fallback.notes,

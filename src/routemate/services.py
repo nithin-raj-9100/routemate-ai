@@ -31,6 +31,18 @@ class Services:
         with self.db_lock:
             return db.recent_searches(self.conn, limit)
 
+    def save_trip(self, **fields: Any) -> int:
+        with self.db_lock:
+            return db.save_trip(self.conn, **fields)
+
+    def trips(self) -> list[dict[str, Any]]:
+        with self.db_lock:
+            return db.saved_trips(self.conn)
+
+    def delete_trip(self, trip_id: int) -> bool:
+        with self.db_lock:
+            return db.delete_trip(self.conn, trip_id)
+
 
 def build_services(settings: Settings) -> Services:
     conn, network = db.open_network(settings.db_path)

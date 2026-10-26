@@ -209,3 +209,22 @@ def test_generate_json_stops_reading_once_json_is_complete():
     client = Streaming()
     assert client.generate_json(system="", prompt="", schema={}) == {"origin": "Ameerpet", "n": {"a": 1}}
     assert client.pulled == 3
+
+
+@pytest.mark.parametrize(
+    "text, mode, buses",
+    [
+        ("Ameerpet to Uppal, I want a less crowded train", "least_crowded", None),
+        ("Ameerpet to Mehdipatnam by bus", None, True),
+        ("Ameerpet to Uppal, metro only please", None, False),
+        ("Ameerpet to MG Bus Station", None, None),
+    ],
+)
+def test_rule_parser_crowd_and_bus_preferences(rules, text, mode, buses):
+    q = rules.parse(text, now=480)
+    assert q.mode == mode and q.buses == buses
+
+
+def test_rule_parser_finds_bus_only_places(rules):
+    q = rules.parse("from Ameerpet to Mehdipatnam", now=480)
+    assert q.origin == "ameerpet" and q.destination == "bus_mehdipatnam"

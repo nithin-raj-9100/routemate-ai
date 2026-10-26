@@ -82,3 +82,44 @@ def test_ask_stream(client):
 def test_ask_stream_reports_planning_errors(client):
     body = client.post("/api/ask/stream", json={"text": "Ameerpet to Uppal at 23:58"}).get_data(as_text=True)
     assert "event: error" in body and "NO_SERVICE" in body
+
+
+def test_network_lists_bus_routes_and_sources(client):
+    body = client.get("/api/network").get_json()
+    assert len(body["busRoutes"]) > 100
+    kinds = {s["kind"] for s in body["stations"]}
+    assert kinds == {"metro", "bus"}
+    assert body["crowding"]["source"] and body["busFare"]["source"]
+
+
+def test_route_with_buses_flag(client):
+    r = client.get("/api/route?from=Ameerpet&to=Mehdipatnam&departAt=09:00")
+    body = r.get_json()
+    assert r.status_code == 200 and body["buses"] is True
+    assert "bus" in body["summary"]["modes"]
+    assert any(g["type"] == "bus" for g in body["geometry"])
+    assert sum(t["fare"] for t in body["summary"]["tickets"]) == body["summary"]["fare"]
+    plain = client.get("/api/route?from=Ameerpet&to=Uppal&departAt=09:00").get_json()
+    assert plain["buses"] is False and plain["summary"]["crowd"]["label"]
+
+
+def test_least_crowded_route(client):
+    body = client.get("/api/route?from=Miyapur&to=Uppal&departAt=09:00&mode=least_crowded").get_json()
+    assert body["mode"] == "least_crowded"
+    assert all(s["crowd"] for s in body["steps"] if s["type"] == "ride")
+
+
+def test_saved_trips_crud(client):
+    r = client.post("/api/trips", json={"origin": "Ameerpet", "destination": "Hitech City", "mode": "fewest_transfers", "departAt": "9:05"})
+    assert r.status_code == 201
+    trip = r.get_json()["trip"]
+    assert trip["origin"] == "ameerpet" and trip["departAt"] == "09:05" and trip["name"] == "Ameerpet → Hitech City"
+    assert [t["id"] for t in client.get("/api/trips").get_json()["trips"]] == [trip["id"]]
+    assert client.delete(f"/api/trips/{trip['id']}").status_code == 200
+    assert client.delete(f"/api/trips/{trip['id']}").status_code == 404
+    assert client.get("/api/trips").get_json()["trips"] == []
+
+
+def test_saved_trip_validation(client):
+    assert client.post("/api/trips", json={"origin": "Atlantis", "destination": "Uppal"}).status_code == 400
+    assert client.post("/api/trips", json={"origin": "Ameerpet", "destination": "Uppal", "arriveBy": "nope"}).status_code == 400

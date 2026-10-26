@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..ds.fuzzy import normalize, similarity
+from ..ds.fuzzy import damerau_levenshtein, normalize, similarity
 from ..ds.trie import Trie
 from ..network.model import Network
 
@@ -33,12 +33,20 @@ class StationIndex:
         self.trie = Trie()
         self.names: dict[str, str] = {}
         self.compact: dict[str, str] = {}
-        for sid, st in network.stations.items():
-            weight = 3.0 if network.is_interchange(sid) else 2.0 if self._is_terminal(sid) else 1.0
-            forms = {normalize(st.name), normalize(sid.replace("_", " "))} | {normalize(a) for a in st.aliases}
+        metro_first = sorted(network.stations.values(), key=lambda st: st.kind != "metro")
+        for st in metro_first:
+            sid = st.id
+            if st.kind == "metro":
+                weight = 3.0 if network.is_interchange(sid) else 2.0 if self._is_terminal(sid) else 1.0
+                forms = {normalize(st.name), normalize(sid.replace("_", " "))} | {normalize(a) for a in st.aliases}
+            else:
+                weight = 0.2
+                forms = {normalize(st.name)}
             for form in forms:
+                if form in self.names:
+                    continue
                 self.names[form] = sid
-                self.compact[form.replace(" ", "")] = sid
+                self.compact.setdefault(form.replace(" ", ""), sid)
                 self.trie.insert(form, sid, weight + 0.5)
                 for word in form.split():
                     if len(word) > 2:
@@ -60,7 +68,7 @@ class StationIndex:
         prefix = self.trie.top_k(norm, 2)
         if len(prefix) == 1 or (prefix and len(norm) >= 4):
             return prefix[0][0]
-        best, score = self._best_fuzzy(norm)
+        best, score = self._best_fuzzy(norm, RESOLVE_MIN_SIM)
         return best if score >= RESOLVE_MIN_SIM else None
 
     def suggest(self, text: str, k: int = 8) -> list[str]:
@@ -77,10 +85,20 @@ class StationIndex:
                     break
         return out
 
-    def _best_fuzzy(self, norm: str) -> tuple[str | None, float]:
+    def _best_fuzzy(self, norm: str, floor: float = 0.0) -> tuple[str | None, float]:
+        """Most similar known name. Names that cannot beat `floor` or the best so far are skipped
+        by length alone, and the edit distance stops early once it is out of reach."""
         best, score = None, 0.0
         for form, sid in self.names.items():
-            s = similarity(norm, form)
+            longest = max(len(norm), len(form))
+            need = max(score, floor)
+            if 1.0 - abs(len(norm) - len(form)) / longest <= need and need > 0:
+                continue
+            budget = int((1.0 - need) * longest)
+            distance = damerau_levenshtein(norm, form, budget)
+            if distance > budget:
+                continue
+            s = 1.0 - distance / longest
             if s > score:
                 best, score = sid, s
         return best, score
@@ -100,8 +118,8 @@ class StationIndex:
                     continue
                 if len(phrase) < 5:
                     continue
-                sid, score = self._best_fuzzy(phrase)
                 threshold = SINGLE_WORD_MIN_SIM if n == 1 else PHRASE_MIN_SIM
+                sid, score = self._best_fuzzy(phrase, threshold)
                 if sid and score >= threshold:
                     candidates.append(Mention(sid, i, i + n, score + n * 0.01, phrase))
         candidates.sort(key=lambda m: (-m.score, -(m.end - m.start), m.start))

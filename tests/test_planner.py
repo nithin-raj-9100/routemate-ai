@@ -5,7 +5,7 @@ from routemate.planner.planner import PlanningError
 
 
 def test_network_shape(network, planner):
-    assert len(network.stations) == 57
+    assert len(network.metro_stations) == 57
     assert set(network.lines) == {"red", "blue", "green"}
     assert {s for s in network.stations if network.is_interchange(s)} == {"ameerpet", "mg_bus_station", "parade_ground"}
     total = planner.tg.offsets[("red", 1)][-1]
@@ -47,7 +47,7 @@ def test_fewest_transfers_never_has_more_changes_than_fastest(planner):
 
 
 def test_astar_and_dijkstra_agree_on_real_network(planner):
-    stations = list(planner.network.stations)
+    stations = planner.network.metro_stations
     for i in range(0, len(stations), 7):
         for j in range(3, len(stations), 11):
             if stations[i] == stations[j]:
@@ -116,18 +116,18 @@ def test_fare_uses_shortest_distance_and_slabs(planner):
     assert km < 2 and fare == 11
     fare, km = planner.fare_between("miyapur", "lb_nagar")
     assert km > 24 and fare == 69
-    cheap = planner.plan("Miyapur", "LB Nagar", mode="cheapest", depart_at=540)
-    assert cheap.fare == 69 and cheap.notes
+    metro_only = planner.plan("Miyapur", "LB Nagar", mode="fastest", depart_at=540)
+    assert metro_only.fare == 69 and [t["mode"] for t in metro_only.tickets] == ["metro"]
 
 
 def test_options_are_pareto_optimal(planner):
     plans, _ = planner.options("Raidurg", "Uppal", depart_at=540)
     assert plans
-    vecs = [(p.itinerary.arrive_at, p.itinerary.transfers) for p in plans]
+    vecs = [(p.itinerary.arrive_at, p.itinerary.transfers, p.itinerary.crowd_level) for p in plans]
     for i, a in enumerate(vecs):
         for j, b in enumerate(vecs):
             if i != j:
-                assert not (b[0] <= a[0] and b[1] <= a[1])
+                assert not all(y <= x for x, y in zip(a, b))
     assert plans[0].label and "Fastest" in plans[0].label
 
 

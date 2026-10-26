@@ -6,7 +6,8 @@ from typing import Any
 
 from flask import Blueprint, Response, current_app, jsonify, request, stream_with_context
 
-from ..network.model import fmt_hhmm, parse_hhmm
+from ..network.model import CROWD_LABELS, fmt_hhmm, parse_hhmm
+from ..network.transit_graph import BUS_COLOR
 from ..planner.planner import MODES, PlanningError
 from ..services import Services
 
@@ -38,6 +39,10 @@ def _avoid_arg() -> list[str]:
     return [a.strip() for a in (request.args.get("avoid") or "").split(",") if a.strip()]
 
 
+def _flag(name: str) -> bool:
+    return (request.args.get(name) or "").strip().lower() in ("1", "true", "yes", "on")
+
+
 @api.errorhandler(PlanningError)
 def _planning_error(exc: PlanningError):
     return jsonify({"error": {"code": exc.code, "message": exc.message}}), exc.status
@@ -49,7 +54,13 @@ def health():
     return jsonify(
         {
             "status": "ok",
-            "network": {"city": s.network.city, "stations": len(s.network.stations), "lines": len(s.network.lines)},
+            "network": {
+                "city": s.network.city,
+                "stations": len(s.network.metro_stations),
+                "lines": len(s.network.lines),
+                "busStops": len(s.network.stations) - len(s.network.metro_stations),
+                "busRoutes": len(s.network.buses),
+            },
             "graph": {"nodes": len(s.planner.tg.graph), "edges": s.planner.tg.graph.edge_count},
             "ai": s.gemini.status() if s.gemini else {"provider": "gemini", "enabled": False, "reason": "disabled by ROUTEMATE_AI"},
         }
@@ -69,6 +80,16 @@ def network():
                 "lastDeparture": fmt_hhmm(net.service.last_departure),
             },
             "fare": {"currency": net.fares.currency, "source": net.fares.source},
+            "busFare": {"source": net.bus_fares.source} if net.bus_fares else None,
+            "crowding": (
+                {
+                    "source": net.crowding.source,
+                    "modelled": net.crowding.modelled,
+                    "labels": [label for _, label in CROWD_LABELS],
+                }
+                if net.crowding
+                else None
+            ),
             "modes": [{"id": k, "description": v} for k, v in MODES.items()],
             "lines": [
                 {
@@ -91,8 +112,21 @@ def network():
                     "lines": net.lines_at(st.id),
                     "interchange": net.is_interchange(st.id),
                     "aliases": list(st.aliases),
+                    "kind": st.kind,
                 }
                 for st in net.stations.values()
+            ],
+            "busRoutes": [
+                {
+                    "id": r.id,
+                    "number": r.number,
+                    "name": f"Bus {r.number}",
+                    "headsign": net.stations[r.stops[-1]].name,
+                    "color": BUS_COLOR,
+                    "stations": list(r.stops),
+                    "tripsPerDay": len(r.departures),
+                }
+                for r in net.buses.values()
             ],
         }
     )
@@ -108,7 +142,7 @@ def suggest():
         {
             "query": q,
             "results": [
-                {"id": sid, "name": net.stations[sid].name, "lines": net.lines_at(sid)}
+                {"id": sid, "name": net.stations[sid].name, "lines": net.lines_at(sid), "kind": net.stations[sid].kind}
                 for sid in s.planner.stations.suggest(q, limit)
             ],
         }
@@ -131,6 +165,7 @@ def route():
             arrive_by=_time_arg("arriveBy"),
             avoid=_avoid_arg(),
             trace=trace,
+            buses=_flag("buses"),
         )
     except PlanningError:
         s.log(channel="form", origin=origin, destination=destination, mode=mode, found=False,
@@ -145,7 +180,9 @@ def route():
 @api.get("/routes/options")
 def options():
     s = services()
-    plans, stats = s.planner.options(_required("from"), _required("to"), depart_at=_time_arg("departAt"), avoid=_avoid_arg())
+    plans, stats = s.planner.options(
+        _required("from"), _required("to"), depart_at=_time_arg("departAt"), avoid=_avoid_arg(), buses=_flag("buses")
+    )
     return jsonify({"options": [p.to_dict(s.network, s.planner.tg) for p in plans], "search": stats.as_dict()})
 
 
@@ -237,3 +274,47 @@ def ask():
 def history():
     limit = min(max(int(request.args.get("limit", 20)), 1), 100)
     return jsonify({"searches": services().history(limit)})
+
+
+@api.get("/trips")
+def list_trips():
+    return jsonify({"trips": services().trips()})
+
+
+@api.post("/trips")
+def save_trip():
+    s = services()
+    payload: dict[str, Any] = request.get_json(silent=True) or {}
+    origin = s.planner.resolve(str(payload.get("origin") or ""), "starting point")
+    destination = s.planner.resolve(str(payload.get("destination") or ""), "destination")
+    mode = s.planner.normalize_mode(payload.get("mode"))
+    times = {}
+    for key in ("departAt", "arriveBy"):
+        value = (payload.get(key) or "").strip()
+        if value:
+            try:
+                times[key] = fmt_hhmm(parse_hhmm(value))
+            except ValueError as exc:
+                raise PlanningError("BAD_TIME", f"'{key}' must be HH:MM (24h), got '{value}'") from exc
+    st = s.network.stations
+    name = (payload.get("name") or "").strip()[:80] or f"{st[origin].name} → {st[destination].name}"
+    avoid = [s.planner.resolve(str(a), "station to avoid") for a in payload.get("avoid") or []]
+    trip_id = s.save_trip(
+        name=name,
+        origin=origin,
+        destination=destination,
+        mode=mode,
+        depart_at=times.get("departAt"),
+        arrive_by=times.get("arriveBy"),
+        avoid=avoid,
+        buses=bool(payload.get("buses")),
+    )
+    trip = next(t for t in s.trips() if t["id"] == trip_id)
+    return jsonify({"trip": trip}), 201
+
+
+@api.delete("/trips/<int:trip_id>")
+def delete_trip(trip_id: int):
+    if not services().delete_trip(trip_id):
+        raise PlanningError("NOT_FOUND", "No saved trip with that id.", 404)
+    return jsonify({"deleted": trip_id})

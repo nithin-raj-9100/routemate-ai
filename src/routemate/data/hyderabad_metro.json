@@ -33,6 +33,42 @@
       { "upto_km": null, "fare": 69 }
     ]
   },
+  "crowding": {
+    "source": "HMRL daily entries via Deccan Chronicle: 3 Jul 2023 (Raidurg 32k, LB Nagar 30k, Ameerpet 29k, Miyapur 23k; corridors I 2.6 lakh, II 25k, III 2.25 lakh) and 7 Jun 2019 (HITEC City 18k, KPHB 13k). Peak windows: HMRL 08:00-11:00 and 17:00-20:00; press-reported rush 09:00-12:00 and 17:00-21:00.",
+    "modelled": "2019 figures are scaled by the median 2019->2023 growth of stations with both counts. Stations with no published count get their corridor's average. The time-of-day factors are modelled around the published peak windows, not measured.",
+    "line_daily_riders": { "red": 260000, "green": 25000, "blue": 225000 },
+    "station_daily_entries_2023": { "raidurg": 32000, "lb_nagar": 30000, "ameerpet": 29000, "miyapur": 23000 },
+    "station_daily_entries_2019": { "ameerpet": 19000, "hitech_city": 18000, "lb_nagar": 16000, "miyapur": 14000, "kphb_colony": 13000 },
+    "time_factors": [
+      { "from": "00:00", "to": "07:00", "factor": 0.2 },
+      { "from": "07:00", "to": "08:00", "factor": 0.5 },
+      { "from": "08:00", "to": "11:00", "factor": 1.0 },
+      { "from": "11:00", "to": "12:00", "factor": 0.75 },
+      { "from": "12:00", "to": "17:00", "factor": 0.5 },
+      { "from": "17:00", "to": "20:00", "factor": 1.0 },
+      { "from": "20:00", "to": "21:00", "factor": 0.7 },
+      { "from": "21:00", "to": "24:00", "factor": 0.3 }
+    ]
+  },
+  "bus_fare": {
+    "currency": "INR",
+    "source": "TGSRTC City Ordinary fares (circular 21/2019-OPD(P), 2 km stages) plus the infrastructure surcharge from 6 Oct 2025 (+Rs 5 on stages 1-3, +Rs 10 from stage 4).",
+    "slabs": [
+      { "upto_km": 4, "fare": 15 },
+      { "upto_km": 6, "fare": 20 },
+      { "upto_km": 10, "fare": 25 },
+      { "upto_km": 18, "fare": 30 },
+      { "upto_km": 28, "fare": 35 },
+      { "upto_km": 38, "fare": 40 },
+      { "upto_km": null, "fare": 45 }
+    ]
+  },
+  "walking": {
+    "speed_kmph": 4.5,
+    "max_km": 0.5,
+    "detour": 1.3,
+    "metro_exit_min": 1
+  },
   "lines": [
     {
       "id": "red",

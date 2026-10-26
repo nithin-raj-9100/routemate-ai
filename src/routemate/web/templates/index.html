@@ -24,6 +24,7 @@
       <button class="tab active" data-tab="ask">Ask</button>
       <button class="tab" data-tab="plan">Plan</button>
       <button class="tab" data-tab="lab">Algorithms</button>
+      <button class="tab" data-tab="history">History</button>
     </nav>
 
     <section id="tab-ask" class="tab-body active">
@@ -40,6 +41,8 @@
         <button class="chip">cheapest way from LB Nagar to Miyapur</button>
         <button class="chip">Uppal to Jubilee Hills Check Post at 6pm, avoid Ameerpet</button>
         <button class="chip">what if I want the fastest?</button>
+        <button class="chip">Ameerpet to Mehdipatnam by bus</button>
+        <button class="chip">Miyapur to Uppal at 9am, I want a less crowded train</button>
       </div>
     </section>
 
@@ -76,8 +79,9 @@
             <input id="time" type="time" disabled>
           </div>
         </div>
+        <label class="check"><input type="checkbox" id="buses"> Include TGSRTC buses &amp; short walks</label>
         <button type="submit" class="primary wide">Find route</button>
-        <p class="hint">Tip: click stations on the map to fill From and To.</p>
+        <p class="hint">Tip: click stations on the map to fill From and To (zoom in to see bus stops). "Cheapest" and bus-only places use buses automatically.</p>
       </form>
     </section>
 
@@ -85,6 +89,10 @@
       <p class="muted">Runs every algorithm on the same trip and shows how much work each one did. Uses the From/To of the Plan tab.</p>
       <button id="run-lab" class="primary wide">Compare algorithms</button>
       <div id="lab-out"></div>
+    </section>
+
+    <section id="tab-history" class="tab-body">
+      <div id="history-out"></div>
     </section>
 
     <div id="error" class="error hidden"></div>

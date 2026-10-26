@@ -17,10 +17,17 @@ class Edge:
     direction: int = 0
     transfers: int = 0
     stops: int = 0
+    boardings: int = 0
+    crowd: float = 0.0
+    fare: float = 0.0
 
     @property
     def key(self) -> tuple[Node, Node]:
         return (self.u, self.v)
+
+    @property
+    def crowd_cost(self) -> float:
+        return self.crowd * self.time
 
 
 @dataclass
@@ -34,9 +41,11 @@ class DiGraph:
         self._adj.setdefault(u, [])
 
     def add_edge(self, u: Node, v: Node, **attrs) -> Edge:
-        edge = Edge(u, v, **attrs)
-        self._adj.setdefault(u, []).append(edge)
-        self._adj.setdefault(v, [])
+        return self.add(Edge(u, v, **attrs))
+
+    def add(self, edge: Edge) -> Edge:
+        self._adj.setdefault(edge.u, []).append(edge)
+        self._adj.setdefault(edge.v, [])
         self._edge_count += 1
         return edge
 

@@ -9,7 +9,8 @@ LANGUAGES = {"en": "English", "te": "Telugu", "hi": "Hindi", "ta": "Tamil", "ur"
 
 MODE_REASON = {
     "fastest": "it gets you there earliest",
-    "cheapest": "metro fares are fixed between two stations, so the fastest route costs the same",
+    "cheapest": "it has the lowest total fare",
+    "least_crowded": "its trains are expected to be the least crowded (modelled from published ridership)",
     "fewest_transfers": "it needs the fewest line changes",
     "fewest_stops": "it passes the fewest stations",
     "shortest_distance": "it covers the least track distance",
@@ -28,6 +29,8 @@ def facts_from(plan: dict[str, Any], options: list[dict[str, Any]] | None = None
             "stops": step["stopCount"],
             "departAt": step["departAt"],
             "arriveAt": step["arriveAt"],
+            "mode": step.get("mode", "metro"),
+            "crowd": (step.get("crowd") or {}).get("label"),
         }
         for step in plan["steps"]
         if step["type"] == "ride"
@@ -43,11 +46,18 @@ def facts_from(plan: dict[str, Any], options: list[dict[str, Any]] | None = None
         "changeAt": [st["station"] for st in plan["steps"] if st["type"] == "transfer"],
         "stops": s["stops"],
         "fare": f"₹{s['fare']:g}",
+        "tickets": [f"{t['lineName']} {t['fromName']} -> {t['toName']}: ₹{t['fare']:g}" for t in s.get("tickets", [])],
+        "walks": [
+            {"from": st["from"], "to": st["station"], "metres": st["distanceM"]}
+            for st in plan["steps"]
+            if st["type"] == "walk" and "distanceM" in st
+        ],
+        "crowdModelled": (s.get("crowd") or {}).get("label"),
         "legs": legs,
         "deadline": plan["request"]["arriveBy"],
         "meetsDeadline": plan["request"]["meetsDeadline"],
         "otherOptions": [
-            {"label": o["label"], "arriveAt": o["summary"]["arriveAt"], "lineChanges": o["summary"]["transfers"]}
+            {"label": o["label"], "arriveAt": o["summary"]["arriveAt"], "lineChanges": o["summary"]["transfers"], "fare": o["summary"]["fare"]}
             for o in (options or [])
             if o["summary"]["lines"] != s["lines"] or o["summary"]["arriveAt"] != s["arriveAt"]
         ],
@@ -61,18 +71,23 @@ def facts_from(plan: dict[str, Any], options: list[dict[str, Any]] | None = None
 
 def template_explanation(plan: dict[str, Any], names: dict[str, str]) -> str:
     s = plan["summary"]
-    rides = [st for st in plan["steps"] if st["type"] == "ride"]
     parts: list[str] = []
-    for i, r in enumerate(rides):
-        verb = "Take" if i == 0 else "then change to"
-        parts.append(
-            f"{verb} the {r['lineName']} from {names[r['from']]} towards {r['towardsName']} and get off at "
-            f"{names[r['to']]} ({r['stopCount']} stop{'s' if r['stopCount'] != 1 else ''}, about {round(r['minutes'])} min)"
-        )
+    rides = 0
+    for st in plan["steps"]:
+        if st["type"] == "walk" and "distanceM" in st:
+            parts.append(f"walk {st['distanceM']} m to {names[st['station']]}")
+        elif st["type"] == "ride":
+            verb = "take" if rides == 0 else "then change to"
+            rides += 1
+            parts.append(
+                f"{verb} the {st['lineName']} from {names[st['from']]} towards {st['towardsName']} and get off at "
+                f"{names[st['to']]} ({st['stopCount']} stop{'s' if st['stopCount'] != 1 else ''}, about {round(st['minutes'])} min)"
+            )
     route = "; ".join(parts) + "."
     route = route[0].upper() + route[1:]
-    changes = "No line changes needed." if s["transfers"] == 0 else f"{s['transfers']} line change{'s' if s['transfers'] > 1 else ''}."
-    timing = f"Leave at {s['leaveAt']}, board at {s['boardAt']} and arrive around {s['arriveAt']} — {round(s['totalMinutes'])} min door to door. Fare ₹{s['fare']:g}."
+    changes = "No changes needed." if s["transfers"] == 0 else f"{s['transfers']} change{'s' if s['transfers'] > 1 else ''}."
+    board = f", board at {s['boardAt']}" if s["boardAt"] else ""
+    timing = f"Leave at {s['leaveAt']}{board} and arrive around {s['arriveAt']} — {round(s['totalMinutes'])} min door to door. Fare ₹{s['fare']:g}."
     reason = MODE_REASON.get(plan["mode"])
     why = f" Chosen because {reason}." if reason else ""
     deadline = ""
@@ -95,11 +110,14 @@ class Explainer:
         facts["changeAt"] = [self.names.get(s, s) for s in facts["changeAt"]]
         for leg in facts["legs"]:
             leg["from"], leg["to"] = self.names[leg["from"]], self.names[leg["to"]]
+        for walk in facts["walks"]:
+            walk["from"], walk["to"] = self.names[walk["from"]], self.names[walk["to"]]
         lang = LANGUAGES.get(language, "English")
         system = (
-            "You are RouteMate, a friendly Hyderabad Metro guide. Explain the route in 2-4 short sentences in "
-            f"{lang}. Use ONLY the facts in the JSON: never invent stations, lines, times, fares or crowd levels. "
-            "Say which line to board and in which direction, where to change (if anywhere), when they arrive and the fare, "
+            "You are RouteMate, a friendly Hyderabad Metro and city bus guide. Explain the route in 2-4 short sentences in "
+            f"{lang}. Use ONLY the facts in the JSON: never invent stations, lines, bus numbers, times, fares or crowd levels. "
+            "Say which line or bus to board and in which direction, any walks, where to change (if anywhere), when they arrive and the fare, "
+            "and mention crowding only if a crowd label is given (it is a model estimate, not live data). "
             "and briefly why this route fits what they asked compared with the other options. "
             "For avoided stations: you never board or change there, but if the train passes through, say so honestly. "
             "No greeting, no sign-off, plain text, no markdown."

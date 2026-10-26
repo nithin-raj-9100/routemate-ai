@@ -16,10 +16,14 @@ _FEWER = r"(few|fewer|fewest|less|least|min|minimum|minimal|no|not|without|avoid
 MODE_PATTERNS: list[tuple[str, re.Pattern]] = [
     ("fewest_transfers", re.compile(rf"\b{_FEWER}\b(\s+\w+){{0,5}}\s+{_CHANGE_WORDS}|\bdirect\b|\bsingle train\b|\bone train\b|\bsame train\b")),
     ("cheapest", re.compile(r"\b(cheap|cheaper|cheapest|budget|low fare|lowest fare|least fare|save money|economical|affordable|less money)\b")),
+    ("least_crowded", re.compile(r"\b(crowd|crowds|crowded|crowding|packed|less busy|least busy|not busy|quiet|quieter|get a seat|comfortable)\b")),
     ("fewest_stops", re.compile(r"\b(fewest|fewer|less|least|minimum)\s+(stops|stations|halts)\b")),
     ("shortest_distance", re.compile(r"\b(shortest|least|minimum)\s+(distance|km|kilometers|route|path)\b")),
     ("fastest", re.compile(r"\b(fast|faster|fastest|quick|quicker|quickest|asap|hurry|urgent|earliest|soonest|running late)\b")),
 ]
+
+_BUS = re.compile(r"\b(bus|buses|by road|rtc|tsrtc|tgsrtc|walk|walking)\b")
+_NO_BUS = re.compile(r"\b(no|not|without|avoid|dont|don t|never)\s+(\w+\s+){0,2}(bus|buses)\b|\bmetro only\b|\bonly metro\b")
 
 _CLOCK = re.compile(r"\b(\d{1,2})\s*[:.]\s*(\d{2})\b")
 _TIME = re.compile(r"\b(?P<h>\d{1,2})(?:h(?P<m>\d{2}))?\s*(?P<ap>a\s?m|p\s?m|o clock|oclock|hrs|hours)?\b")
@@ -80,6 +84,12 @@ def detect_mode(text: str) -> str | None:
         if pattern.search(text):
             return mode
     return None
+
+
+def detect_buses(text: str) -> bool | None:
+    if _NO_BUS.search(text):
+        return False
+    return True if _BUS.search(text) else None
 
 
 def _resolve_hour(h: int, m: int, ampm: str | None, words: set[str], now: float) -> float | None:
@@ -165,6 +175,7 @@ class RuleParser:
             depart_at=depart_at,
             arrive_by=arrive_by,
             avoid=avoid,
+            buses=detect_buses(" ".join(t for i, t in enumerate(tokens) if i not in blocked)),
             parser="rules",
         )
         if len(mentions) > 2 + len(avoid):
